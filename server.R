@@ -1,4 +1,5 @@
 # server.R
+source("keys.R")
 
 library(DBI)
 library(RMySQL)
@@ -17,10 +18,10 @@ server <- function(input, output, session) {
   # Function to establish MySQL connection
   db <- dbConnect(
     RMySQL::MySQL(),
-    dbname = "Test",   #database name
-    host = "localhost",         # host
-    username = "root", # username
-    password = "phuongthao15599"  #password
+    dbname = dbname,   #database name
+    host = host,         # host
+    username = username, # username
+    password = password #password
   )
   
   # Function to fetch data from SsQL query
@@ -256,9 +257,8 @@ server <- function(input, output, session) {
       ggtitle(paste(x,"-", y, "Linear Regression"))+
       ylab(paste(y)) +
       theme(plot.title = element_text(hjust = 0.5))+
-      
       stat_smooth(method="lm", formula = y~x,col= "blue",se=FALSE) +
-      geom_point(shape = 4) +
+      geom_point(shape = 2, alpha=.2) +
       stat_regline_equation(label.x=0, label.y=4) +
       stat_cor(aes(label=..rr.label..), label.x=1, label.y=5)
     
