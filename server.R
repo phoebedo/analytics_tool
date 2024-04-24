@@ -5,6 +5,7 @@ library(DBI)
 library(RMySQL)
 library(ggcorrplot)
 library(ggplot2)
+library(plotly)
 library(ggpubr)
 library(kableExtra)
 library(DT)
@@ -202,7 +203,7 @@ server <- function(input, output, session) {
   # }) # end corr matrix
   # 
   
-  #* Distribution page 
+  # Update select input on dataset 
   # Populate the choices for selectInput for variable (numeric)
   observe({
     if (!is.null(queried_data())) {
@@ -211,6 +212,8 @@ server <- function(input, output, session) {
       updateSelectInput(session, "variable", choices = names(numeric_vars))
       updateSelectInput(session, "contributor", choices = names(numeric_vars))
       updateSelectInput(session, "contribute_to", choices = names(numeric_vars))
+      updateSelectInput(session, "corr_independent", choices = names(numeric_vars))
+      updateSelectInput(session, "corr_dependent", choices = names(numeric_vars))
     }
   })
   # Populate the choices for selectInput for category (categorical)
@@ -223,8 +226,11 @@ server <- function(input, output, session) {
   })
   
   
+  
+  
+  #* Distribution page
   # Render the plot for the selected variable and category
-  output$distribution_plot <- renderPlot({
+  output$distribution_plot <- renderPlotly({
     if (!is.null(queried_data())) {
       data <- queried_data()
       variable <- input$variable
@@ -235,13 +241,33 @@ server <- function(input, output, session) {
       
       # Create the plot based on the selected plot type
       if (plot_type == "Histogram") {
+        if(category == "None"){
+          fig_hist <- plot_ly(x =data[[variable]], type = "histogram") %>% layout(
+            bargap=0.1)
+          fig_hist
+        }else{
+          
+          fig_hist <- plot_ly(alpha = 0.6)
+          for(cat in names(data[[category]])){
+            fig_hist <- fig_hist %>% add_histogram(x = filter(data[[variable]], data[[category]]==cat, name =cat))
+          }
+          fig_hist <- fig_hist %>% layout(barmode = "stack")
+          
+          fig_hist
+        }
         
-        hist(data[[variable]])
-      }else {
-        boxplot(data[[variable]])
+      }else{
+       if(category=="None"){
+         fig_boxplot <- plot_ly(x =data[[variable]], type = "box", name = variable) 
+         fig_boxplot
+       }else{
+         fig_boxplot <- plot_ly(x =data[[variable]], y = data[[category]], type = "box", name = variable) 
+         fig_boxplot
+       }
+        
       }
     
-      
+
     }
     
     
@@ -253,12 +279,12 @@ server <- function(input, output, session) {
     y = input$corr_dependent
     
     data %>% ggplot(aes(x=data[[x]], y=data[[y]])) +
-      xlab(paste(x)) +
       ggtitle(paste(x,"-", y, "Linear Regression"))+
+      xlab(paste(x)) +
       ylab(paste(y)) +
       theme(plot.title = element_text(hjust = 0.5))+
+      geom_point(alpha=.2) +
       stat_smooth(method="lm", formula = y~x,col= "blue",se=FALSE) +
-      geom_point(shape = 2, alpha=.2) +
       stat_regline_equation(label.x=0, label.y=4) +
       stat_cor(aes(label=..rr.label..), label.x=1, label.y=5)
     
@@ -289,15 +315,7 @@ server <- function(input, output, session) {
   
   
   # update select input for Independent and Dependent variable 
-  observe({
-    if (!is.null(queried_data())) {
-      data <- queried_data()
-      numeric_vars <- Filter(is.numeric, data)
-      updateSelectInput(session, "corr_independent", choices = names(numeric_vars))
-      updateSelectInput(session, "corr_dependent", choices = names(numeric_vars))
-      
-    }
-  })
+
   
   
   

@@ -106,7 +106,7 @@ fluidPage(
                                  mainPanel(
                                    
                                   h4("Distribution graphs go here"),
-                                  plotOutput("distribution_plot")
+                                  plotlyOutput("distribution_plot")
                                   
                                  ), 
                                  
