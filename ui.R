@@ -10,6 +10,7 @@ library(shiny)
 library(shinycssloaders)
 library(kableExtra)
 library(DT)
+library(plotly)
 
 
 

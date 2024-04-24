@@ -242,18 +242,19 @@ server <- function(input, output, session) {
       # Create the plot based on the selected plot type
       if (plot_type == "Histogram") {
         if(category == "None"){
-          fig_hist <- plot_ly(x =data[[variable]], type = "histogram") %>% layout(
-            bargap=0.1)
+          fig_hist <- plot_ly(x =data[[variable]], type = "histogram") %>% layout(bargap=0.1)
           fig_hist
         }else{
           
-          fig_hist <- plot_ly(alpha = 0.6)
-          for(cat in names(data[[category]])){
-            fig_hist <- fig_hist %>% add_histogram(x = filter(data[[variable]], data[[category]]==cat, name =cat))
+          fig_hist <- plot_ly(alpha = 0.5)
+          for(cat in unique(data[[category]])){
+            cat_data <- filter(data, data[[category]]==cat)
+            fig_hist <- fig_hist %>% add_histogram(x = cat_data[[variable]], name= cat)
           }
-          fig_hist <- fig_hist %>% layout(barmode = "stack")
           
+          fig_hist <- fig_hist %>% layout(barmode = "stack", bargap = 0.05)
           fig_hist
+          
         }
         
       }else{
@@ -324,14 +325,11 @@ server <- function(input, output, session) {
   
   #close connection
   
-  onStop(function() {
-    all_cons <- dbListConnections(MySQL())
-    
-    for(con in all_cons)
-    {dbDisconnect(con)}
-    
-    
-  })
+  # onStop(function() {
+  #   all_cons <- dbListConnections(MySQL())
+  #   
+  #   for(con in all_cons){dbDisconnect(con)}
+  # })
   
   
   
