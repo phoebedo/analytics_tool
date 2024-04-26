@@ -36,16 +36,8 @@ fluidPage(
                           style="display:inline-block",
                           actionButton("submit_query", "Query"),
                           style="margin-left:auto"
-                        )
+                        ))
                         ,
-                        
-                    
-                        sliderInput("prev_rows", 
-                                    label = "Choose number of rows to preview",
-                                    min=5,
-                                    max=200,
-                                    value=10)
-                      ),
                       
                       # Main panel for displaying the results
                       mainPanel(
@@ -55,8 +47,7 @@ fluidPage(
                            uiOutput("view_analysis_btn"),
                            # Data preview table
                            h3(textOutput("data_preview_h3")),
-                           tableOutput("data_preview")
-                
+                           DTOutput("data_preview")
                         
                       )
              ) # end data view
@@ -65,23 +56,22 @@ fluidPage(
              tabPanel("Analysis View", 
                       value = "analysis_view", 
                       tabsetPanel(
-                        id = "analysis_tab", 
+                                  id = "analysis_tab", 
                         tabPanel("Stats", 
-                                 value = "stats_tab", 
-                                 em(textOutput("auto_detect_note")),
-                                 uiOutput("summary_stats_continous"),
-                                 
-                                 uiOutput("category_select"),
-                                 uiOutput("category_table")),
+                         value = "stats_tab", 
+                         em(textOutput("auto_detect_note")),
+                         uiOutput("summary_stats_continous"),
+                         
+                         uiOutput("category_select"),
+                         uiOutput("category_table")     
+                       ), #end Stats tab 
                         
                         
                         
                         tabPanel("Distribution", 
                                  value = "dist_tab", 
-                                 
+                                 #fluid Distribution
                                  fluidRow(
-                                   
-                                 
                                  sidebarPanel(
                                    
                                    
@@ -111,7 +101,7 @@ fluidPage(
                                   
                                  ), 
                                  
-                                 # Contribution Top 
+                                 # Fluid Bucket Top Down
                                  fluidRow(
                                    sidebarPanel(
                                      h4("Contribution"),
@@ -135,13 +125,18 @@ fluidPage(
                                      h4("Contribution....")
                                    )
                                    
-                                 )
+                                 ) #end Bucket Top Down
                                   
-                                 ) # end distribution mainpanel
+                                 ) # end distribution main panel
                         ), #end Distribution
                         
+                       
+                       tabPanel("Cohort Analysis", 
+                                value = "corr_tab", 
+                                h3("Cohort Analysis goes here")
+                       ), # end cohort 
                         
-                        tabPanel("Correlation", 
+                        tabPanel("Regression", 
                                  value = "corr_tab", 
                                  
                                  
@@ -178,7 +173,15 @@ fluidPage(
                                    plotOutput("correlation_plot")
                                    )
                                  )
-                       ) # end correlation 
+                       ), # end regression 
+                       
+                       
+                       #Time Series Forecast
+                       tabPanel("Time Series Forecast", 
+                                value = "time_series", 
+                                h1("No idea how....")) #End time series forecast
+                       
+                      
                         
             ) #end analysis view
                       
@@ -188,7 +191,7 @@ fluidPage(
   )
 
 
-) #end ui
+) #END UI 
 
 
 

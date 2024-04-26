@@ -8,5 +8,5 @@
 
 
 ### Best practice 
-1. Click "Open in Browser" for better UI
+1. "Open in Browser" for better UI
 2. 

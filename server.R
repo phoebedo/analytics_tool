@@ -63,15 +63,14 @@ server <- function(input, output, session) {
     }
     
     
-    output$data_preview <- renderTable({
+    output$data_preview <- renderDT({
       if (!is.null(queried_data())) {
-        head(queried_data(), input$prev_rows)
+       queried_data() %>%
+        datatable(extensions  = "Responsive")
       }
-    }, striped = T,
-    hover = T,
-    spacing ="s",
-    width = "100%",
-    align = "l"
+     
+      
+    }
     )
     
     output$data_preview_h3 <- renderText({
@@ -121,22 +120,24 @@ server <- function(input, output, session) {
   numeric_data <- Filter(is.numeric, data)
 
   stats <- apply(numeric_data, 2, function(x) {
-    c(Min = min(x, na.rm = TRUE),
-      Q1 = quantile(x, probs = 0.25, na.rm = TRUE),
-      Median = median(x, na.rm = TRUE),
-      Mean = mean(x, na.rm = TRUE),
-      Q3 = quantile(x, probs = 0.75, na.rm = TRUE), 
-      Max = max(x, na.rm = TRUE),
-      SD = sd(x, na.rm = TRUE)
+    c(Min = min(x, na.rm = TRUE)  %>% round(digits = 2) ,
+      Q1 = quantile(x, probs = 0.25, na.rm = TRUE)  %>% round(digits = 2) ,
+      Median = median(x, na.rm = TRUE)  %>% round(digits = 2) ,
+      Mean = mean(x, na.rm = TRUE) %>% round(digits = 2) ,
+      Q3 = quantile(x, probs = 0.75, na.rm = TRUE) %>% round(digits = 2) , 
+      Max = max(x, na.rm = TRUE) %>% round(digits = 2) ,
+      SD = sd(x, na.rm = TRUE) %>% round(digits = 2) , 
+      Sum = sum(x, na.rm = TRUE) %>% round(digits = 2) , 
+      Count = sum(!is.na(x))  %>% round(digits = 2) 
     )
   })
   
   
   
   colnames(stats) <- names(numeric_data)
-  rownames(stats) <- c("Min", "Q1", "Median", "Mean", "Q3", "Max", "SD")
+  rownames(stats) <- c("Min", "Q1", "Median", "Mean", "Q3", "Max", "SD", "Sum","Count")
   stats <- as.data.frame(stats)
-  tbl <- stats  %>% round(digits = 2) %>%
+  tbl <- stats %>%
     kable(align = "c",
           caption = "Summary - Statistics for Numeric Variables",
           table.attr = "style='width:60%;'") %>%
@@ -168,6 +169,8 @@ server <- function(input, output, session) {
       # Calculate frequencies for the selected category
       freq <- table(categorical_data[[category]])
 
+      
+      
       category_table <- data.frame(
         Frequency = round(as.numeric(freq),0),
         Cumulative_Frequency = cumsum(freq),
@@ -177,6 +180,7 @@ server <- function(input, output, session) {
       )
       
 
+      
       category_table <- category_table %>%
         kable(align = "c",
               caption = "Summary - Categorical Data Frequency",
@@ -186,6 +190,8 @@ server <- function(input, output, session) {
                       position = "center",
                       font_size = 12)
 
+      
+      
       HTML(category_table)
 
       
@@ -203,7 +209,9 @@ server <- function(input, output, session) {
   # }) # end corr matrix
   # 
   
-  # Update select input on dataset 
+  
+  
+  #Update selectInput on dataset available
   # Populate the choices for selectInput for variable (numeric)
   observe({
     if (!is.null(queried_data())) {
@@ -241,11 +249,11 @@ server <- function(input, output, session) {
       
       # Create the plot based on the selected plot type
       if (plot_type == "Histogram") {
+        # If not category not selected -> show as combined 
         if(category == "None"){
           fig_hist <- plot_ly(x =data[[variable]], type = "histogram") %>% layout(bargap=0.1)
           fig_hist
-        }else{
-          
+        }else{ #break down
           fig_hist <- plot_ly(alpha = 0.5)
           for(cat in unique(data[[category]])){
             cat_data <- filter(data, data[[category]]==cat)
@@ -259,22 +267,54 @@ server <- function(input, output, session) {
         
       }else{
        if(category=="None"){
+         ## If not category not selected -> show as combined 
          fig_boxplot <- plot_ly(x =data[[variable]], type = "box", name = variable) 
          fig_boxplot
        }else{
+         
          fig_boxplot <- plot_ly(x =data[[variable]], y = data[[category]], type = "box", name = variable) 
          fig_boxplot
+         
        }
         
       }
     
-
     }
     
     
 }) # end distribution plot 
   
+  
+  #Bucket TOP Down analysis 
+  
+  
+  
+  
+  
+  
+  
+  
+#* CORRELATION PAGE
+  
+  output$correlation_matrix <- renderPlot({
+    if (!is.null(queried_data())) {
+      numeric_data <- Filter(is.numeric, queried_data())
+      cor_matrix <- cor(numeric_data, use = "pairwise.complete.obs")
+      cor_matrix %>% round(digits = 1) %>% ggcorrplot(
+                 hc.order = TRUE, 
+                 type = "lower", 
+                 outline.col = "white",  
+                 ggtheme = ggplot2::theme_gray, 
+                 colors = c("#6D9EC1", "white", "#E46726"),
+                 lab=T) 
+    }
+  }) # end corr matrix
+  
+  
+  
+  #Single variable regression
   output$correlation_plot <- renderPlot({
+    
     data = queried_data()
     x = input$corr_independent
     y = input$corr_dependent
@@ -293,29 +333,10 @@ server <- function(input, output, session) {
   
   
   
+  # NEW TAB Q4|Next year 
+  #Time series
+  #Auto-regressive
   
-  
-  
-  
-  
-  #* CORRELATION 
-  
-  output$correlation_matrix <- renderPlot({
-    if (!is.null(queried_data())) {
-      numeric_data <- Filter(is.numeric, queried_data())
-      cor_matrix <- cor(numeric_data, use = "pairwise.complete.obs")
-      cor_matrix %>% round(digits = 1) %>% ggcorrplot(
-                 hc.order = TRUE, 
-                 type = "lower", 
-                 outline.col = "white",  
-                 ggtheme = ggplot2::theme_gray, 
-                 colors = c("#6D9EC1", "white", "#E46726"),
-                 lab=T) 
-    }
-  }) # end corr matrix
-  
-  
-  # update select input for Independent and Dependent variable 
 
   
   
@@ -323,7 +344,7 @@ server <- function(input, output, session) {
   
   
   
-  #close connection
+  #close DB connection
   
   # onStop(function() {
   #   all_cons <- dbListConnections(MySQL())
