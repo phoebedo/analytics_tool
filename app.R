@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyWidgets)
 
 #USER MANUAL: Read README.md
 # Launch app  ---> RUN APP 

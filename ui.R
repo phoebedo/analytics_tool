@@ -11,6 +11,7 @@ library(shinycssloaders)
 library(kableExtra)
 library(DT)
 library(plotly)
+library(shinyWidgets)
 
 
 
@@ -20,7 +21,7 @@ library(plotly)
 fluidPage(
   theme = shinytheme("flatly"),
   # Application title
-  titlePanel("Analytics Ultra Pro Max Plus PA+++ Tool"),
+  titlePanel("Analytics Ultra Plus Pro Max PA+++ Tool"),
   
   # Sidebar layout with input and output definitions
   navbarPage("Menu", 
@@ -101,31 +102,33 @@ fluidPage(
                                   
                                  ), 
                                  
-                                 # Fluid Bucket Top Down
+                                 #Fluid Bucket Top Down
                                  fluidRow(
                                    sidebarPanel(
-                                     h4("Contribution"),
-                                     sliderInput("top_percent", 
-                                                 label = "Top ... %",
-                                                 min=1,
-                                                 max=100,
-                                                 value=10),
+                                     h4("Contribution - Top Down"),
+                                     selectInput("bucket_size", "Bucket size (%)",
+                                                 choices = c(5,10,20),
+                                                 selected = "10"),
                                      # Select input for choosing the category (categorical)
-                                     selectInput("contributor", "Of", 
-                                                 choices = c("None"), 
+                                     selectInput("contributor", "Of",
+                                                 choices = c("None"),
+                                                 selected = "None"),
+
+                                     # Checkbox input for selecting the plot type
+                                     selectInput("contribute_to", "Contribute To",
+                                                 choices = c("None"),
                                                  selected = "None"),
                                      
-                                     # Checkbox input for selecting the plot type
-                                     selectInput("contribute_to", "Contribute To", 
-                                                 choices = c("None"), 
-                                                 selected = "None")
-                                     
+                                     selectInput("measure_bucket", "Measure",
+                                                 choices = c("Sum","Median","Average"),
+                                                 selected = "Median")
+
                                    ),
                                    mainPanel(
-                                     h4("Contribution....")
+                                     uiOutput("topdown_table")
                                    )
-                                   
-                                 ) #end Bucket Top Down
+
+                                 )  #end Bucket Top Down
                                   
                                  ) # end distribution main panel
                         ), #end Distribution
@@ -133,53 +136,99 @@ fluidPage(
                        
                        tabPanel("Cohort Analysis", 
                                 value = "corr_tab", 
-                                h3("Cohort Analysis goes here")
+                                h4("Cohort Analysis")
+                              
                        ), # end cohort 
                         
+                       
+                       # Single Regression 
                         tabPanel("Regression", 
                                  value = "corr_tab", 
                                  
-                                 
+                                 #Corr matrix
                                  fluidRow(
                                    h4("Correlation Overview "),
                                    div(plotOutput("correlation_matrix")) 
-                                 ),
+                                 ), # end corr matrix 
                                  
+                                 #Single regression
+                              
                                  fluidRow(
                                  
                                  sidebarPanel(
-                                   h4("Correlation Zoom In"),
+                                   h4("Regression"),
                                    
-                                   selectInput("corr_independent", 
+                                   selectInput("reg_independent", 
                                                "Independent variable (X):", 
                                                choices = c("None"), 
                                                selected = "None"),
                                  
-                                   selectInput("corr_dependent", 
+                                   selectInput("reg_dependent", 
                                                "Dependent variable (Y):", 
                                                choices = c("None"), 
                                                selected = "None"),
                                    
                                    
-                                   selectInput("corr_model", 
+                                   selectInput("reg_model", 
                                                "Regression model:", 
                                                choices = c("Linear", "2nd deg. Polynomial", "3rd deg. Polynomial"), 
-                                               selected = "Linear")
+                                               selected = "Linear"), 
+                                   
+                                   
+                                   selectInput("regression_cat", "Category Breakdown", 
+                                               choices = c("None"), 
+                                               selected = "None")
                                  
                                  ), 
                       
                                  mainPanel(
-                                   h4("Correlation Zoom In "),
-                                   plotOutput("correlation_plot")
+                                   h4("Regression Model"),
+                                   plotOutput("regression_model_single")
                                    )
-                                 )
-                       ), # end regression 
+                                 ),# end single regression 
+                                
+                                 
+                                 
+                                 
+                                 
+                                  #Multivariate regression
+                                 
+                                 fluidRow(
+                                   
+                                   sidebarPanel(
+                                     h4("Multivariate Regression"),
+                                     
+                                     checkboxGroupInput("multi_reg_predictors", "Predictors", 
+                                                        choices = "None", 
+                                                        selected = "None"),
+                                     
+                                     checkboxGroupInput("multi_reg_responses", "Responses", 
+                                                        choices = "None", 
+                                                        selected = "None"),
+                                     
+                                     
+                                     selectInput("multi_reg_model", 
+                                                 "Regression model:", 
+                                                 choices = c("Linear"), 
+                                                 selected = "Linear")
+                                     
+                                   ), 
+                                   
+                                   mainPanel(
+                                     h4("Multivariate Regression Model")
+                                   )
+                                 )# end multivariate regression 
+                                 
+                                 
+                                 
+                       ), #END REGRESSION TAB 
                        
+                      
                        
                        #Time Series Forecast
                        tabPanel("Time Series Forecast", 
                                 value = "time_series", 
-                                h1("No idea how....")) #End time series forecast
+                                h1("Pendinggggg ....")) #End time series forecast
                        
                       
                         
