@@ -18,9 +18,10 @@ server <- function(input, output, session) {
   db <- dbConnect(
     RMySQL::MySQL(),
     dbname = dbname,   #database name
-    host = host,         # host
+    host = host, 
+    port = port, # host
     username = username, # username
-    password = password #password
+    password = password #passwords
   )
   
   # Function to fetch data from SsQL query
@@ -36,6 +37,9 @@ server <- function(input, output, session) {
   # Reactive expression to store queried data
   queried_data <- reactiveVal(NULL)
   
+  datasetsReactive <- reactiveValues(data_total= NULL, data_filtered_descriptive = NULL)
+  
+  
   
   # Function to update queried_data with SQL query
   
@@ -44,6 +48,7 @@ server <- function(input, output, session) {
       data <- query_data(input$sql_query)
       if (!is.null(data)) {
         queried_data(data)
+        datasetsReactive$data_total <- data
       } else {
         queried_data(NULL)
         showModal(modalDialog(
@@ -87,8 +92,11 @@ server <- function(input, output, session) {
     
     
   }) # Output data preview table
-  
     
+    
+    
+    updateAwesomeCheckbox(session,inputId = 'mRedesignSliders',value = FALSE)
+   
   })
   
   observeEvent(input$view_analysis_btn, {
@@ -152,8 +160,6 @@ server <- function(input, output, session) {
 
   # Categorical var summary statistics table
   
-  
-  
   output$category_table <- renderUI({
     if (!is.null(queried_data())) {
       
@@ -178,8 +184,6 @@ server <- function(input, output, session) {
 
       )
       
-
-      
       category_table <- category_table %>%
         kable(align = "c",
               caption = "Summary - Categorical Data Frequency",
@@ -189,8 +193,7 @@ server <- function(input, output, session) {
                       position = "center",
                       font_size = 12)
 
-      
-      
+    
       HTML(category_table)
 
       
@@ -216,6 +219,9 @@ server <- function(input, output, session) {
     if (!is.null(queried_data())) {
       data <- queried_data()
       numeric_vars <- Filter(is.numeric, data)
+      categorical_vars <- Filter(function(x) is.factor(x) | is.character(x), data)
+      
+      
       updateSelectInput(session, "variable", choices = names(numeric_vars))
       updateSelectInput(session, "contributor", choices = names(numeric_vars))
       updateSelectInput(session, "contribute_to", choices = names(numeric_vars))
@@ -223,32 +229,170 @@ server <- function(input, output, session) {
       updateSelectInput(session, "reg_dependent", choices = names(numeric_vars))
       updateCheckboxGroupInput(session, "multi_reg_predictors", choices = names(numeric_vars), selected = NULL)
       updateCheckboxGroupInput(session, "multi_reg_responses", choices = names(numeric_vars), selected = NULL)
+      updateMultiInput(session, "select_num_fields_to_filter", choices = c(names(numeric_vars)), selected =NULL)
+      
+      
+      
+      
+      
+      updateSelectInput(session, "category", choices = c("None", names(categorical_vars)), selected ="None")
+      updateSelectInput(session, "regression_cat", choices = c("None", names(categorical_vars)), selected ="None")
+      updateMultiInput(session, "select_cat_fields_to_filter", choices = c(names(categorical_vars)), selected =NULL)
+      
+      
+      
       
     }
   })
-  # Populate the choices for selectInput for category (categorical)
-  observe({
-    if (!is.null(queried_data())) {
-      data <- queried_data()
-      categorical_vars <- Filter(function(x) is.factor(x) | is.character(x), queried_data())
-      updateSelectInput(session, "category", choices = c("None", names(categorical_vars)), selected ="None")
-      updateSelectInput(session, "regression_cat", choices = c("None", names(categorical_vars)), selected ="None")
-    }
-  })
+  
+  
+  #APPLYING FILTERS----
+  slidercolrange <- -2
+  
+  # observeEvent(input$mNumVarFilter,{
+  #   disable("mRedesignSliders")
+  #   updateAwesomeCheckbox(session,inputId = 'mRedesignSliders',value = FALSE)
+  #   enable("mRedesignSliders")
+  # }) 
+  # 
+  # observeEvent(input$mChrVarFilter,{
+  #   disable("mRedesignSliders")
+  #   updateAwesomeCheckbox(session,inputId = 'mRedesignSliders',value = FALSE)
+  #   enable("mRedesignSliders")
+  # }) 
+  # 
+  
+  #######- above multi table datatable end
+  
+  output$muimultisliderplay <- renderUI({
+    if (!is.null(queried_data())) {data <- queried_data()}
+    
+    tryCatch({
+      if (length(input$select_num_fields_to_filter) != 0){
+        slider_options <- input$select_num_fields_to_filter
+      }
+      else{
+        return()
+      }
+      
+        # First, create a list of sliders each with a different name
+        sliders <- lapply(1:length(slider_options), function(i) {
+          if (slidercolrange==12){
+            slidercolrange <- 1
+          }
+          else{
+            slidercolrange <- slidercolrange ++ 6
+          }
+          inputName1A <- slider_options[i]
+          
+          # if (input$mRedesignSliders == TRUE){
+          #   column(slidercolrange+6,sliderInput(inputId = inputName1A, 
+          #                                       label = inputName1A, 
+          #                                       min=min(datasetsReactive$data_filtered_descriptive()[,inputName1A],na.rm = TRUE), 
+          #                                       max=max(datasetsReactive$data_filtered_descriptive()[,inputName1A],na.rm = TRUE),
+          #                                       value=c(min(datasetsReactive$data_filtered_descriptive()[[inputName1A]],na.rm = TRUE),
+          #                                               max(datasetsReactive$data_filtered_descriptive()[[inputName1A]],na.rm = TRUE)),
+          #                                       width = "500px"))
+          # }
+          # else{
+            column(slidercolrange+6,sliderInput(inputId = inputName1A, 
+                                                label = inputName1A,
+                                                min=min(datasetsReactive$data_total[,inputName1A],na.rm = TRUE),
+                                                max=max(datasetsReactive$data_total[,inputName1A],na.rm = TRUE),
+                                                value=c(min(datasetsReactive$data_total[[inputName1A]],na.rm = TRUE),
+                                                        max(datasetsReactive$data_total[[inputName1A]],na.rm = TRUE)),
+                                                width = "500px"))
+         # }  
+          
+          
+        })
+        # Create a tagList of sliders (this is important)
+        do.call(tagList, sliders)
+        
+      }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+      
+    })
+    
+    
+    output$multislidertext <- renderUI({
+      tryCatch({
+        if (length(input$select_cat_fields_to_filter) != 0){
+          slider_optionsTXT <- input$select_cat_fields_to_filter
+        }
+        else{
+          return()
+        }
+        
+        # First, create a list of sliders each with a different name
+        sliders <- lapply(1:length(slider_optionsTXT), function(i) {
+          if (slidercolrange==12){
+            slidercolrange <- 1
+          }
+          else{
+            slidercolrange <- slidercolrange ++ 6
+          }
+          inputName1ATXT <- slider_optionsTXT[i]
+          
+          # if (input$mRedesignSliders == TRUE){
+          #   mchoice <- as.list(unlist(t(distinct(datasetsReactive$data_filtered_descriptive()[inputName1ATXT]))))
+          # }
+          # else{
+            mchoice <- as.list(unlist(t(distinct(datasetsReactive$data_total[inputName1ATXT]))))
+         # }
+          
+          column(slidercolrange+6,
+                 selectInput(inputId = inputName1ATXT, 
+                             label = inputName1ATXT, 
+                             choices = mchoice,
+                             selected = mchoice,
+                             multiple = TRUE)) 
+          
+        })
+        # Create a tagList of sliders (this is important)
+        do.call(tagList, sliders)
+        
+      }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+      
+    })
+    
+   #UPDATE FILTERED
+    
+    datasetsReactive$data_filtered_descriptive <- reactive({
+      tryCatch({ 
+        data_ <- datasetsReactive$data_total
+        slider_options <- slider_options <- input$select_num_fields_to_filter
+        # this is how you fetch the input variables from ui 
+        for(i in slider_options) {
+          
+          xxtt<-as.double(eval(parse(text=paste0("input$",i))))
+          data_ <- data_[data_[[i]] <= xxtt[2] &                       
+                           data_[[i]] >= xxtt[1],]
+          
+        }
+        
+        slider_optionsTXT <-  input$select_cat_fields_to_filter
+        # this is how you fetch the input variables from ui component component character fields
+        for(i in slider_optionsTXT) {
+          
+          xxttTXT<-eval(parse(text=paste0("input$",i)))
+          data_ <- data_[data_[[i]] %in%  xxttTXT,]
+        }
+        data_
+      }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+      return(data_)
+    }) 
   
   
   
-  
+
   #* Distribution page
   # Render the plot for the selected variable and category
   output$distribution_plot <- renderPlotly({
     if (!is.null(queried_data())) {
-      data <- queried_data()
+      data <- datasetsReactive$data_filtered_descriptive()
       variable <- input$variable
       category <- input$category
       plot_type <- input$plot_type
-      
-      
       
       # Create the plot based on the selected plot type
       if (plot_type == "Histogram") {

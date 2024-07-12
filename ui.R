@@ -12,6 +12,7 @@ library(kableExtra)
 library(DT)
 library(plotly)
 library(shinyWidgets)
+library(shinydashboard)
 
 
 
@@ -71,8 +72,60 @@ fluidPage(
                         
                         tabPanel("Distribution", 
                                  value = "dist_tab", 
-                                 #fluid Distribution
+                                 #FILTER PANE
                                  fluidRow(
+                                   column(6),
+                                   column(6, 
+                                          align = "right", 
+                                          tags$h5("Page filter options"),
+                                          dropdownButton(
+                                            circle = FALSE, status = "default",
+                                            icon = icon("gear"), 
+                                            width = "100%",
+                                            tooltip = tooltipOptions(title = "Expand/Collapse",placement = "bottom"), 
+                                            
+                                            
+                                            splitLayout(id="select_fields", col_widths = c(6,6),
+                                                multiInput(inputId = "select_num_fields_to_filter",
+                                                           label = "Select numerric fields", 
+                                                           choices = "None"
+                                                           ), 
+                                                
+                                                multiInput(inputId = "select_cat_fields_to_filter",
+                                                           label = "Select categorical fields", 
+                                                           choices = "None")
+                                              
+                                            ),
+                                           # awesomeCheckbox(inputId = "mRedesignSliders",label = "Impact ALL Filters", value = FALSE), 
+                                            
+                                            splitLayout( id="filters_applied", col_widths = c(6,6),
+                                              box( width = "100%", 
+                                                   height = "200px",
+                                                   uiOutput(outputId = "muimultisliderplay")
+                                              ), 
+                                              box( width = "100%", 
+                                                   height = "200px", 
+                                                   uiOutput(outputId = "multislidertext")
+                                                
+                                                
+                                              )
+                                              
+                                            )
+                                            
+                                            
+                                            
+                                          )
+                                          
+                               )
+                                   
+                                   
+                                 ),  #END FILTER PANE
+                                 
+                                 
+                                 #Main page fluid Distribution
+                                 fluidRow(
+                                   
+                                  
                                  sidebarPanel(
                                    
                                    
@@ -91,9 +144,8 @@ fluidPage(
                                                  selected = "Histogram")
                                    # uiOutput("category_select")
                                    
-                                 ) #end side panel
+                                 ) #end SIDE PANEL 
                                  ,
-                              
                                  # Main panel for displaying the results
                                  mainPanel(
                                    
